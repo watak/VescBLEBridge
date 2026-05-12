@@ -20,7 +20,18 @@ uint8_t txValue = 0;
 #define VESC_CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
 #define VESC_CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 
-#define LOG_TAG_BLESERVER "BleServer" // <--- Add this line right here
+#define LOG_TAG_BLESERVER "BleServer" 
+
+
+// Detect if the board is the Seeed XIAO C6
+#if defined(ARDUINO_SEEED_XIAO_ESP32C6)
+  #define VESC_RX_PIN D10
+  #define VESC_TX_PIN D9
+// Otherwise, default to the original C3 pins
+#else
+  #define VESC_RX_PIN 20
+  #define VESC_TX_PIN 21
+#endif
 
 /**  None of these are required as they will be handled by the library with defaults. **
  **                       Remove as you see fit for your needs                        */
@@ -79,7 +90,7 @@ class MyCallbacks : public NimBLECharacteristicCallbacks {
 void setup()
 {
   Serial.begin(115200);
-  Serial1.begin(115200, SERIAL_8N1, D10, D9); // RX=20, TX=21
+  Serial1.begin(115200, SERIAL_8N1, VESC_RX_PIN, VESC_TX_PIN);
 
   // Create the BLE Device
   NimBLEDevice::init("VescBLEBridge");
@@ -110,15 +121,10 @@ void setup()
 
   pCharacteristicVescRx->setCallbacks(new MyCallbacks());
 
-  // Start the VESC service
-  //pService->start();
 
   // Start advertising
   NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(VESC_SERVICE_UUID);
-  //    pAdvertising->setAppearance(0x00);
-  //    pAdvertising->setScanResponse(true);
-  //    pAdvertising->setMinPreferred(0x0);  // set value to 0x00 to not advertise this parameter
 
   pAdvertising->start();
   ESP_LOGI(LOG_TAG_BLESERVER, "waiting a client connection to notify...");
